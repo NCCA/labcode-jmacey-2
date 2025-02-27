@@ -4,6 +4,7 @@ project(DLA_build)
 
 set(CMAKE_CXX_STANDARD 17)
 find_package(OpenImageIO CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 find_package(Boost COMPONENTS filesystem thread)
 ## RGBA Target
 add_executable(DLA)
@@ -12,7 +13,7 @@ target_sources(DLA PRIVATE src/main.cpp src/Image.cpp
 include/RGBA.h include/Image.h
 include/Walker.h src/Walker.cpp
 )
-
+target_link_libraries(DLA PRIVATE fmt::fmt-header-only)
 target_link_libraries(DLA PRIVATE OpenImageIO::OpenImageIO Boost::filesystem
 Boost::thread
 )

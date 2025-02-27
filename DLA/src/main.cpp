@@ -1,22 +1,25 @@
 #include <iostream>
 #include <cstdlib>
 #include "Walker.h"
-
+#include <fmt/format.h>
 int main()
 {
-  static int width=200;
-  static int height=200;
+  static int width=400;
+  static int height=400;
   Walker w(width,height);
-  w.seed_image(10);
+  w.seed_image(25);
   int found =0;
-  while(found < 1000)
+  int frame_number=0;
+  for(size_t i=0; i<100000; ++i)
   {
-    auto f = w.walk();
-    if(f)
+    if(w.walk())
     {
-      found++;
+      if((i%100) == 0)
+      {
+        w.save_image(fmt::format("/transfer/DLA/DLA.{:04d}.jpg",frame_number++));
+      }
     }
   }
-  w.save_image("test.png");
+
   return EXIT_SUCCESS;
 }
