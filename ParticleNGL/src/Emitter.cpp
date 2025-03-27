@@ -38,7 +38,7 @@ void Emitter::debug() const
 void Emitter::update()
 {
   const ngl::Vec3 gravity(0.0f,-9.81f,0.0f);
-  const float dt=0.01;
+  const float dt=0.01f;
 
   for(auto &p : m_particles)
   {
@@ -111,30 +111,16 @@ ngl::Vec3 Emitter::randomVectorOnSphere(float _radius)
 
 void Emitter::render() const
 {
-  std::cout<<"Render\n";
-  auto view = ngl::lookAt({0,20,20},{0,0,0},{0,1,0});
-  auto project = ngl::perspective(45.0f,1.0f,0.1f,200.0f);
-  ngl::ShaderLib::use(ngl::nglColourShader);
-  ngl::ShaderLib::setUniform("MVP",project*view);
-  glPointSize(10.0);
   m_vao->bind();
   m_vao->setData(ngl::AbstractVAO::VertexData(
           m_particles.size() * sizeof(Particle),
           m_particles[0].pos.m_x
     ));
   m_vao->setVertexAttributePointer(0,3,GL_FLOAT,sizeof(Particle),0);
+  m_vao->setVertexAttributePointer(1,3,GL_FLOAT,sizeof(Particle),6);
+
   m_vao->setNumIndices(m_particles.size());
   m_vao->draw();
   m_vao->unbind();
-//  ngl::Transformation tx;
-//  for(auto p : m_particles)
-//  {
-//    tx.setPosition(p.pos);
-//    //tx.setScale(p.size,p.size,p.size);
-//    ngl::ShaderLib::setUniform("MVP", project*view*tx.getMatrix());
-//    ngl::ShaderLib::setUniform("Colour",p.colour.m_r,p.colour.m_g,p.colour.m_b,1.0f);
-//
-//    ngl::VAOPrimitives::draw("sphere",GL_POINTS);
-//  }
 
 }

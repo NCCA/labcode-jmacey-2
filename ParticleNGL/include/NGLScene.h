@@ -1,6 +1,7 @@
 #ifndef NGLSCENE_H_
 #define NGLSCENE_H_
 #include <ngl/Vec3.h>
+#include <ngl/Mat4.h>
 #include "WindowParams.h"
 // this must be included after NGL includes else we get a clash with gl libs
 #include <QOpenGLWindow>
@@ -85,6 +86,8 @@ private:
     ngl::Vec3 m_modelPos;
     std::unique_ptr<Emitter> m_emitter;
     bool m_animate = true;
+    ngl::Mat4 m_view;
+    ngl::Mat4 m_project;
 
 };
 

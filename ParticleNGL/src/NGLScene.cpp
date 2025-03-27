@@ -4,6 +4,9 @@
 #include "NGLScene.h"
 #include <ngl/NGLInit.h>
 #include <ngl/VAOPrimitives.h>
+#include <ngl/ShaderLib.h>
+#include <ngl/Transformation.h>
+#include <ngl/Util.h>
 #include <iostream>
 
 NGLScene::NGLScene()
@@ -12,18 +15,16 @@ NGLScene::NGLScene()
   setTitle("Blank NGL");
 }
 
-
 NGLScene::~NGLScene()
 {
   std::cout<<"Shutting down NGL, removing VAO's and Shaders\n";
 }
 
-
-
 void NGLScene::resizeGL(int _w , int _h)
 {
   m_win.width  = static_cast<int>( _w * devicePixelRatio() );
   m_win.height = static_cast<int>( _h * devicePixelRatio() );
+  m_project=ngl::perspective(45.0f, float(m_win.width)/float(m_win.height), 0.001f,200.0f);
 }
 
 
@@ -38,7 +39,11 @@ void NGLScene::initializeGL()
   // enable multisampling for smoother drawing
   glEnable(GL_MULTISAMPLE);
   ngl::VAOPrimitives::createSphere("sphere",1.0f,20);
-  m_emitter=std::make_unique<Emitter>(1000);
+  ngl::VAOPrimitives::createLineGrid("floor",100,100,50);
+  m_emitter=std::make_unique<Emitter>(100000);
+  ngl::ShaderLib::loadShader("ParticleShader","shaders/ParticleVertex.glsl","shaders/ParticleFragment.glsl");
+  ngl::ShaderLib::use("ParticleShader");
+  m_view = ngl::lookAt({0,40,40},{0,0,0},{0,1,0});
   startTimer(10);
 }
 
@@ -49,7 +54,22 @@ void NGLScene::paintGL()
   // clear the screen and depth buffer
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0,0,m_win.width,m_win.height);
+  auto rotX = ngl::Mat4::rotateX(m_win.spinXFace);
+  auto rotY = ngl::Mat4::rotateY(m_win.spinYFace);
+  auto mouseRotation = rotX * rotY;
+  mouseRotation.m_m[3][0]=m_modelPos.m_x;
+  mouseRotation.m_m[3][1]=m_modelPos.m_y;
+  mouseRotation.m_m[3][2]=m_modelPos.m_z;
+
+  glPointSize(1);
+  ngl::ShaderLib::use("ParticleShader");
+  ngl::ShaderLib::setUniform("MVP",m_project*m_view*mouseRotation);
   m_emitter->render();
+
+  ngl::ShaderLib::use(ngl::nglColourShader);
+  ngl::ShaderLib::setUniform("MVP",m_project*m_view*mouseRotation);
+  ngl::ShaderLib::setUniform("Colour",1.0f,1.0f,1.0f,1.0f);
+  ngl::VAOPrimitives::draw("floor");
 
 }
 
