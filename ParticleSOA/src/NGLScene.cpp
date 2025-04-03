@@ -40,10 +40,15 @@ void NGLScene::initializeGL()
   glEnable(GL_MULTISAMPLE);
   ngl::VAOPrimitives::createSphere("sphere",1.0f,20);
   ngl::VAOPrimitives::createLineGrid("floor",100,100,50);
-  m_emitter=std::make_unique<Emitter>(2000000);
+  m_emitter=std::make_unique<Emitter>(10000,10000,800,ngl::Vec3(0,0,0));
   ngl::ShaderLib::loadShader("ParticleShader","shaders/ParticleVertex.glsl","shaders/ParticleFragment.glsl");
   ngl::ShaderLib::use("ParticleShader");
-  m_view = ngl::lookAt({0,40,40},{0,0,0},{0,1,0});
+  m_view = ngl::lookAt({0,40,80},{0,0,0},{0,1,0});
+  m_previousTime=std::chrono::steady_clock::now();
+
+  m_text = std::make_unique<ngl::Text>("fonts/DejaVuSansMono.ttf",16);
+  m_text->setScreenSize(width(),height());
+  m_text->setColour(1,1,1);
   startTimer(10);
 }
 
@@ -61,22 +66,30 @@ void NGLScene::paintGL()
   mouseRotation.m_m[3][1]=m_modelPos.m_y;
   mouseRotation.m_m[3][2]=m_modelPos.m_z;
 
-  glPointSize(1);
   ngl::ShaderLib::use("ParticleShader");
   ngl::ShaderLib::setUniform("MVP",m_project*m_view*mouseRotation);
   m_emitter->render();
-
   ngl::ShaderLib::use(ngl::nglColourShader);
   ngl::ShaderLib::setUniform("MVP",m_project*m_view*mouseRotation);
   ngl::ShaderLib::setUniform("Colour",1.0f,1.0f,1.0f,1.0f);
   ngl::VAOPrimitives::draw("floor");
 
+  ngl::ShaderLib::use(ngl::nglTextShader);
+  m_text->renderText(10,700,"Particle System");
+
+
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
+void NGLScene::keyReleaseEvent(QKeyEvent *_event)
+{
+  m_keysPressed -=(Qt::Key)_event->key();
+}
+
 void NGLScene::keyPressEvent(QKeyEvent *_event)
 {
+  m_keysPressed +=(Qt::Key)_event->key();
   // this method is called every time the main window recives a key event.
   // we then switch on the key value and set the camera in the GLWindow
   switch (_event->key())
@@ -96,11 +109,37 @@ void NGLScene::keyPressEvent(QKeyEvent *_event)
     update();
 }
 
+void NGLScene::process_keys()
+{
+  std::cout<<"Set Size " << m_keysPressed.size()<<"\n";
+  float dx=0.0f;
+  float dy=0.0f;
+  float dz=0.0f;
+  const float inc=0.2f;
+  for(auto key : m_keysPressed)
+  {
+    switch(key)
+    {
+      case Qt::Key_Left : dx -= inc; break;
+      case Qt::Key_Right : dx +=inc; break;
+      case Qt::Key_Up : dz += inc; break;
+      case Qt::Key_Down : dz -=inc; break;
+
+    }
+  }
+m_emitter->move(dx,dy,dz);
+}
+
 void NGLScene::timerEvent(QTimerEvent *_event)
 {
+  auto now = std::chrono::steady_clock::now();
+  auto delta = std::chrono::duration<float,std::chrono::seconds::period>(now-m_previousTime);
+  m_previousTime=now;
+  std::cout<<"time delta" << delta.count()<<'\n';
   if(m_animate)
   {
-    m_emitter->update();
+    process_keys();
+    m_emitter->update(delta.count());
   }
   update();
 }

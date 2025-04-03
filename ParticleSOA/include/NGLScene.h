@@ -7,6 +7,9 @@
 #include <QOpenGLWindow>
 #include "Emitter.h"
 #include <memory>
+#include <chrono>
+#include <QSet>
+#include <ngl/Text.h>
 //----------------------------------------------------------------------------------------------------------------------
 /// @file NGLScene.h
 /// @brief this class inherits from the Qt OpenGLWindow and allows us to use NGL to draw OpenGL
@@ -79,7 +82,8 @@ private:
     void wheelEvent( QWheelEvent *_event) override;
 
     void timerEvent(QTimerEvent *_event) override;
-
+    void keyReleaseEvent(QKeyEvent *_event) override;
+    void process_keys();
     /// @brief windows parameters for mouse control etc.
     WinParams m_win;
     /// position for our model
@@ -88,6 +92,10 @@ private:
     bool m_animate = true;
     ngl::Mat4 m_view;
     ngl::Mat4 m_project;
+    std::chrono::steady_clock::time_point m_previousTime;
+    QSet<Qt::Key> m_keysPressed;
+
+    std::unique_ptr<ngl::Text> m_text;
 
 };
 
